@@ -39,7 +39,7 @@ jobs:
         sys:
           - { system: ubuntu, os: ubuntu-latest , shell: bash }
           - { system: macos , os: macos-latest  , shell: bash }
-          - { system: cygwin, os: windows-latest, shell: bash }
+          #- { system: cygwin, os: windows-latest, shell: bash }
           - { system: msys2 , os: windows-latest, shell: 'msys2 {0}' }
 
     defaults:
@@ -89,7 +89,7 @@ jobs:
             sudo apt-get install gcc autoconf gettext autopoint help2man lzip texinfo texlive
             ;;
           (macos)
-            brew install bison flex gcc autoconf gettext help2man lzip texinfo texlab
+            brew install bison flex gcc autoconf automake libtool gettext help2man lzip texinfo texlab
             ;;
           (cygwin)
             choco install cygwin
@@ -99,8 +99,8 @@ jobs:
             echo "C:/cygwin/usr/bin" >> $GITHUB_PATH
             ;;
           (msys2)
-            echo "Appending 'C:/msys64/usr/bin' to PATH (file: $GITHUB_PATH)"
-            echo "C:/msys64/usr/bin" >> $GITHUB_PATH
+            #echo "Appending 'C:/msys64/usr/bin' to PATH (file: $GITHUB_PATH)"
+            #echo "C:/msys64/usr/bin" >> $GITHUB_PATH
             #pacman --noconfirm -S base-devel msys2-devel
             ;;
           (*)
@@ -121,11 +121,11 @@ jobs:
         mkdir -p build
         cd build
         ../configure -C
-        make V=0
+        make -j12 V=0
 
     - name: Run Tests
       if: ${{ success() }}
-      run: make check V=0 || { rc=$?; cat tests/test-suite.log; exit $rc; }
+      run: make -j12 V=0 check || { rc=$?; cat tests/test-suite.log; exit $rc; }
       working-directory: build
 
     - name: Run Distcheck
@@ -140,6 +140,7 @@ jobs:
       run: cat '/home/runner/work/flex/results/cpp-builtin.sarif' || true
 
     - name: Upload Artefacts
+      if: ${{ always() }}
       uses: actions/upload-artifact@v2
       with:
         name: artifact-${{ matrix.sys.system }}
