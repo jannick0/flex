@@ -81,7 +81,7 @@ jobs:
         update: true
 
     # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#preinstalled-software
-    - name: Prepare System
+    - name: Install Dependencies
       run: |
         echo "PATH=$PATH"
         case '${{ matrix.sys.system }}' in
@@ -109,19 +109,29 @@ jobs:
             ;;
         esac
 
-    - name: Run Prepare
+    - name: Run Autogen
       if: ${{ success() }}
       run: |
         autoreconf --version
         ./autogen.sh
 
-    - name: Run Build
+    - name: Run Configure
       if: ${{ success() }}
       run: |
         mkdir -p build
         cd build
         ../configure -C
-        make -j12 V=0
+
+    - name: Run Make
+      if: ${{ success() }}
+      run: |
+        if ! make -j12 V=0
+        then
+          rc=$?
+          make V=1 # show command line where error occurred
+          exit $rc
+        fi
+      working-directory: build
 
     - name: Run Tests
       if: ${{ success() }}
@@ -146,6 +156,7 @@ jobs:
         name: artifact-${{ matrix.sys.system }}
         path: |
           build/config.*
+          build/src/config.h
           build/tests/test-suite.log
           build/flex-*.tar.*
           /home/runner/work/flex/results/cpp-builtin.sarif
