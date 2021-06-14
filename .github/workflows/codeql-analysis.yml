@@ -157,6 +157,8 @@ jobs:
         path: |
           build/config.*
           build/src/config.h
+          build/src/stage1scan.c
+          build/src/scan.c
           build/tests/test-suite.log
           build/flex-*.tar.*
           /home/runner/work/flex/results/cpp-builtin.sarif
