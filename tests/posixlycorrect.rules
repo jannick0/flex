@@ -38,7 +38,7 @@
 %%
 
 ab{3}   { } 
-\n	{ }	 
+\r?\n	{ }
 .	{M4_TEST_FAILMESSAGE}
 
 ###

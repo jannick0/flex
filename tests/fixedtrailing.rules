@@ -35,7 +35,7 @@
 foo/a+		{M4_TEST_ASSERT(yyleng== 3)}
 foo		{M4_TEST_FAILMESSAGE}
 aa		{ }
-\n		{ }
+\r?\n	{ }
 .		{M4_TEST_FAILMESSAGE}
 
 ###

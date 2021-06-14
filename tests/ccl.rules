@@ -67,7 +67,7 @@
     b
     )+@x2@\n                                              {M4_TEST_DO(yyecho())}
 
-
+\r  {}
 .|\n                                                      {M4_TEST_FAILMESSAGE}
 ###
 ^alpha:0123456789 	~!@#$%^&*(){}[]':;"<>,./?\+=_-`@alpha@

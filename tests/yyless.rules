@@ -33,7 +33,7 @@
 %%
 foobar	{M4_TEST_DO(yyless(3))}
 bar	;
-\n	;
+\r?\n	;
 .	{M4_TEST_FAILMESSAGE}
 
 ###
