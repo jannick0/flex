@@ -22,8 +22,8 @@ on:
 
 jobs:
   analyze:
-    name: ${{ matrix.system }}
-    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.sys.system }}
+    runs-on: ${{ matrix.sys.os }}
     #permissions:
     #  actions: read
     #  contents: read
@@ -36,19 +36,15 @@ jobs:
         # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python' ]
         # Learn more:
         # https://docs.github.com/en/free-pro-team@latest/github/finding-security-vulnerabilities-and-errors-in-your-code/configuring-code-scanning#changing-the-languages-that-are-analyzed
-        include:
-          - system: ubuntu
-            os: ubuntu-latest
-            shell: bash -c '{0}'
-          - system: macos
-            os: macos-latest
-            shell: bash -c '{0}'
-          - system: cygwin
-            os: windows-latest
-            shell: bash -c '{0}'
-          - system: msys2
-            os: windows-latest
-            shell: msys2 {0}
+        sys:
+          - { system: ubuntu, os: ubuntu-latest , shell: bash }
+          - { system: macos , os: macos-latest  , shell: bash }
+          - { system: cygwin, os: windows-latest, shell: bash }
+          - { system: msys2 , os: windows-latest, shell: 'msys2 {0}' }
+
+    defaults:
+      run:
+        shell: ${{ matrix.sys.shell }}
 
     steps:
     - name: Checkout repository
@@ -77,7 +73,7 @@ jobs:
     #    uses a compiled language
 
     - name: Prepare MSYS2
-      if: ${{ matrix.system == 'msys2' }}
+      if: ${{ matrix.sys.system == 'msys2' }}
       uses: msys2/setup-msys2@v2
       with:
         msystem: MSYS
@@ -88,7 +84,7 @@ jobs:
     - name: Prepare System
       run: |
         echo "PATH=$PATH"
-        case '${{ matrix.system }}' in
+        case '${{ matrix.sys.system }}' in
           (ubuntu)
             sudo apt-get install gcc autoconf gettext autopoint help2man lzip texinfo texlive
             ;;
@@ -108,21 +104,19 @@ jobs:
             #pacman --noconfirm -S base-devel msys2-devel
             ;;
           (*)
-            echo "System ${{ matrix.system }} on ${{ matrix.os }} not configured."
+            echo "System ${{ matrix.sys.system }} on ${{ matrix.sys.os }} not configured."
             exit 1
             ;;
         esac
 
     - name: Run Prepare
       if: ${{ success() }}
-      shell: ${{ matrix.shell }}
       run: |
         autoreconf --version
         ./autogen.sh
 
     - name: Run Build
       if: ${{ success() }}
-      shell: ${{ matrix.shell }}
       run: |
         mkdir -p build
         cd build
@@ -131,13 +125,11 @@ jobs:
 
     - name: Run Tests
       if: ${{ success() }}
-      shell: ${{ matrix.shell }}
       run: make check V=0 || { rc=$?; cat tests/test-suite.log; exit $rc; }
       working-directory: build
 
     - name: Run Distcheck
       if: ${{ success() }}
-      shell: ${{ matrix.shell }}
       run: make distcheck
       working-directory: build
 
@@ -150,7 +142,7 @@ jobs:
     - name: Upload Artefacts
       uses: actions/upload-artifact@v2
       with:
-        name: artifact-${{ matrix.system }}
+        name: artifact-${{ matrix.sys.system }}
         path: |
           build/config.*
           build/tests/test-suite.log
