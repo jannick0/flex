@@ -37,8 +37,8 @@ jobs:
         # Learn more:
         # https://docs.github.com/en/free-pro-team@latest/github/finding-security-vulnerabilities-and-errors-in-your-code/configuring-code-scanning#changing-the-languages-that-are-analyzed
         sys:
-          - { system: ubuntu, os: ubuntu-latest , shell: bash }
-          - { system: macos , os: macos-latest  , shell: bash }
+          #- { system: ubuntu, os: ubuntu-latest , shell: bash }
+          #- { system: macos , os: macos-latest  , shell: bash }
           #- { system: cygwin, os: windows-latest, shell: bash }
           - { system: msys2 , os: windows-latest, shell: 'msys2 {0}' }
 
