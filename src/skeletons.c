@@ -139,7 +139,7 @@ const char *suffix (void)
 	} else {
 		suffix = skel_property("M4_PROPERTY_SOURCE_SUFFIX");
 	}
-	
+
 	return suffix;
 }
 
@@ -164,7 +164,7 @@ const char *skel_property(const char *propname)
 		if (strncmp(line, "m4_define(", 10) != 0)
 			continue;
 		/* skip space and quotes before macro name */
-		for (cp = line + 10; isspace(*cp) || *cp == '['; *cp++)
+		for (cp = line + 10; isspace(*cp) || *cp == '['; cp++)
 			continue;
 		/* copy up to following ] into the name buffer */
 		np = name;
@@ -232,7 +232,7 @@ void skelout (bool announce)
 			}
 			if (buf[1] == '#') {
 				/* %# indicates comment line to be ignored */
-			} 
+			}
 			else if (buf[1] == '%') {
 				/* %% is a break point for skelout() */
 				if (announce) {
@@ -246,7 +246,7 @@ void skelout (bool announce)
 			}
 		}
 
-		else if (do_copy) 
+		else if (do_copy)
 			outn (buf);
 	}			/* end while */
 }
