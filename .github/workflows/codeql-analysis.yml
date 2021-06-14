@@ -63,6 +63,9 @@ jobs:
     #    and modify them (or add more) to build your code if your project
     #    uses a compiled language
 
+    - name: Run Install
+      run: sudo apt-get install gcc autoconf gettext autopoint help2man lzip texinfo texlive
+
     - name: Run Prepare
       run: ./autogen.sh
 
