@@ -17,8 +17,8 @@ on:
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [ master ]
-  schedule:
-    - cron: '31 22 * * 4'
+  #schedule:
+  #  - cron: '31 22 * * 4'
 
 jobs:
   analyze:
@@ -40,7 +40,7 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-/b
+
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v1
@@ -53,8 +53,8 @@ jobs:
 
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
     # If this step fails, then you should remove it and run the build manually (see below)
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v1
+    #- name: Autobuild
+    #  uses: github/codeql-action/autobuild@v1
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 https://git.io/JvXDl
@@ -63,9 +63,25 @@ jobs:
     #    and modify them (or add more) to build your code if your project
     #    uses a compiled language
 
-    #- run: |
-    #   make bootstrap
-    #   make release
+    - name: Run Prepare
+      run: ./autogen.sh
+
+    - name: Run Build
+      run: |
+        mkdir -p build
+        cd build
+        ../configure -C
+        make
+
+    - name: Run Tests
+      if: ${{ success() }}
+      run: make check V=0 || { rc=$?; cat tests/test-suite.log; exit $rc; }
+      working-directory: build
+
+    - name: Run Distcheck
+      if: ${{ success() }}
+      run: make distcheck
+      working-directory: build
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
