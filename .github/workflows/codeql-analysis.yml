@@ -39,10 +39,13 @@ jobs:
         include:
           - system: ubuntu
             os: ubuntu-latest
+            shell: bash -c '{0}'
           - system: macos
             os: macos-latest
+            shell: bash -c '{0}'
           - system: cygwin
             os: windows-latest
+            shell: bash -c '{0}'
           - system: msys2
             os: windows-latest
             shell: msys2 {0}
