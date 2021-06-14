@@ -22,20 +22,30 @@ on:
 
 jobs:
   analyze:
-    name: Analyze
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
+    name: ${{ matrix.system }}
+    runs-on: ${{ matrix.os }}
+    #permissions:
+    #  actions: read
+    #  contents: read
+    #  security-events: write
 
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'cpp' ]
+        # language: [ 'cpp' ]
         # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python' ]
         # Learn more:
         # https://docs.github.com/en/free-pro-team@latest/github/finding-security-vulnerabilities-and-errors-in-your-code/configuring-code-scanning#changing-the-languages-that-are-analyzed
+        include:
+          - system: ubuntu
+            os: ubuntu-latest
+          - system: macos
+            os: macos-latest
+          - system: cygwin
+            os: windows-latest
+          - system: msys2
+            os: windows-latest
+            shell: msys2 {0}
 
     steps:
     - name: Checkout repository
@@ -45,7 +55,7 @@ jobs:
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v1
       with:
-        languages: ${{ matrix.language }}
+        languages: cpp
         # If you wish to specify custom queries, you can do so here or in a config file.
         # By default, queries listed here will override any specified in a config file.
         # Prefix the list here with "+" to use these queries and those in the config file.
@@ -63,28 +73,83 @@ jobs:
     #    and modify them (or add more) to build your code if your project
     #    uses a compiled language
 
-    - name: Run Install
-      run: sudo apt-get install gcc autoconf gettext autopoint help2man lzip texinfo texlive
+    - name: Prepare MSYS2
+      if: ${{ matrix.system == 'msys2' }}
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MSYS
+        install: base-devel msys2-devel
+        update: true
+
+    # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#preinstalled-software
+    - name: Prepare System
+      run: |
+        echo "PATH=$PATH"
+        case '${{ matrix.system }}' in
+          (ubuntu)
+            sudo apt-get install gcc autoconf gettext autopoint help2man lzip texinfo texlive
+            ;;
+          (macos)
+            brew install bison flex gcc autoconf gettext help2man lzip texinfo texlab
+            ;;
+          (cygwin)
+            choco install cygwin
+            choco install cyg-get
+            cyg-get default
+            echo "Appending 'C:/cygwin/usr/bin' to PATH (file: $GITHUB_PATH)"
+            echo "C:/cygwin/usr/bin" >> $GITHUB_PATH
+            ;;
+          (msys2)
+            echo "Appending 'C:/msys64/usr/bin' to PATH (file: $GITHUB_PATH)"
+            echo "C:/msys64/usr/bin" >> $GITHUB_PATH
+            #pacman --noconfirm -S base-devel msys2-devel
+            ;;
+          (*)
+            echo "System ${{ matrix.system }} on ${{ matrix.os }} not configured."
+            exit 1
+            ;;
+        esac
 
     - name: Run Prepare
-      run: ./autogen.sh
+      if: ${{ success() }}
+      shell: ${{ matrix.shell }}
+      run: |
+        autoreconf --version
+        ./autogen.sh
 
     - name: Run Build
+      if: ${{ success() }}
+      shell: ${{ matrix.shell }}
       run: |
         mkdir -p build
         cd build
         ../configure -C
-        make
+        make V=0
 
     - name: Run Tests
       if: ${{ success() }}
+      shell: ${{ matrix.shell }}
       run: make check V=0 || { rc=$?; cat tests/test-suite.log; exit $rc; }
       working-directory: build
 
     - name: Run Distcheck
       if: ${{ success() }}
+      shell: ${{ matrix.shell }}
       run: make distcheck
       working-directory: build
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
+
+    - name: Show CodeQL Results
+      run: cat '/home/runner/work/flex/results/cpp-builtin.sarif' || true
+
+    - name: Upload Artefacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: artifact-${{ matrix.system }}
+        path: |
+          build/config.*
+          build/tests/test-suite.log
+          build/flex-*.tar.*
+          /home/runner/work/flex/results/cpp-builtin.sarif
