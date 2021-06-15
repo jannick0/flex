@@ -15,3 +15,7 @@ flex.1: $(top_srcdir)/configure.ac $(top_srcdir)/src/cpp-flex.skl $(top_srcdir)/
 	--source='The Flex Project' --manual='Programming' \
 	--output=$@ $(FLEX) \
 	|| rm -f $@
+
+EMPTY_AUTOMAKE_TARGETS = dvi pdf ps info html tags ctags
+.PHONY: $(EMPTY_AUTOMAKE_TARGETS)
+$(EMPTY_AUTOMAKE_TARGETS):
