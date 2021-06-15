@@ -91,11 +91,10 @@ jobs:
     - name: Install Dependencies
       shell: bash
       run: |
+        set -ex
         echo "PATH=$PATH"
         echo "Environment:"
         env | sort
-        echo 'choco config list'
-        choco config list | sort
         CHO_TOOLS_DIR='C:\tools'
         case '${{ matrix.sys.system }}' in
           (ubuntu)
