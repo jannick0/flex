@@ -96,7 +96,7 @@ jobs:
         env | sort
         echo 'choco config list'
         choco config list | sort
-        CHO_TOOLS_DIR='C:\\tools'
+        CHO_TOOLS_DIR='C:\tools'
         case '${{ matrix.sys.system }}' in
           (ubuntu)
             sudo apt-get install gcc autoconf gettext autopoint help2man lzip texinfo texlive
