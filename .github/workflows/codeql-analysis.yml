@@ -122,8 +122,8 @@ jobs:
             echo >> "$GITHUB_PATH" "${RUNNER_TEMP}\\cygwin"
             ;;
           (msys2)
-            choco install tinytex
-            echo >> "$GITHUB_PATH" "${CHO_TOOLS_DIR}\\TinyTeX\\bin\\win32"
+            #choco install tinytex
+            #echo >> "$GITHUB_PATH" "${CHO_TOOLS_DIR}\\TinyTeX\\bin\\win32"
             ;;
           (*)
             echo "System ${{ matrix.sys.system }} on ${{ matrix.sys.os }} not configured."
@@ -136,6 +136,7 @@ jobs:
     - name: Run Autogen
       if: ${{ success() }}
       run: |
+        echo "PATH=$PATH"
         autoreconf --version
         ./autogen.sh
 
