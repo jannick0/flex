@@ -39,7 +39,7 @@ jobs:
         sys:
           #- { system: ubuntu, os: ubuntu-latest , shell: bash }
           #- { system: macos , os: macos-latest  , shell: bash }
-          #- { system: cygwin, os: windows-latest, shell: bash }
+          - { system: cygwin, os: windows-latest, shell: 'cyg   {0}' }
           - { system: msys2 , os: windows-latest, shell: 'msys2 {0}' }
 
     defaults:
@@ -47,8 +47,15 @@ jobs:
         shell: ${{ matrix.sys.shell }}
 
     steps:
+
+    - name: '⚙️ git config'
+      run: git config --global core.autocrlf false
+      shell: bash
+
     - name: Checkout repository
       uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
@@ -82,8 +89,11 @@ jobs:
 
     # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#preinstalled-software
     - name: Install Dependencies
+      shell: bash
       run: |
         echo "PATH=$PATH"
+        echo "Environment:"
+        env | sort
         case '${{ matrix.sys.system }}' in
           (ubuntu)
             sudo apt-get install gcc autoconf gettext autopoint help2man lzip texinfo texlive
@@ -92,16 +102,23 @@ jobs:
             brew install bison flex gcc autoconf automake libtool gettext help2man lzip texinfo texlab
             ;;
           (cygwin)
-            choco install cygwin
-            choco install cyg-get
-            cyg-get default
+            # choco install tinytex
+            # https://community.chocolatey.org/packages/Cygwin
+            choco install bison flex autoconf automake libtool gettext help2man lzip texlive --source cygwin
             echo "Appending 'C:/cygwin/usr/bin' to PATH (file: $GITHUB_PATH)"
-            echo "C:/cygwin/usr/bin" >> $GITHUB_PATH
+            echo >> $GITHUB_PATH "$ChocolateyToolsLocation"
+
+            # generate batch file for CYGWIN shell
+            pushd "$RUNNER_TEMP"
+            mkdir -p cygwin
+            echo > cygwin/cyg.CMD '@ECHO OFF'
+            echo >>cygwin/cyg.CMD 'SETLOCAL'
+            echo >>cygwin/cyg.CMD "C:\\cygwin\\bin\\bash -leo pipefail -c 'cd \"\$(cygpath '%CD:\\=/%')\"; %*'"
+            popd
+            echo >> "$GITHUB_PATH" "${RUNNER_TEMP}\\cygwin"
             ;;
           (msys2)
-            #echo "Appending 'C:/msys64/usr/bin' to PATH (file: $GITHUB_PATH)"
-            #echo "C:/msys64/usr/bin" >> $GITHUB_PATH
-            #pacman --noconfirm -S base-devel msys2-devel
+            choco install tinytex
             ;;
           (*)
             echo "System ${{ matrix.sys.system }} on ${{ matrix.sys.os }} not configured."
@@ -147,7 +164,7 @@ jobs:
       uses: github/codeql-action/analyze@v1
 
     - name: Show CodeQL Results
-      run: cat '/home/runner/work/flex/results/cpp-builtin.sarif' || true
+      run: cat results/cpp-builtin.sarif || true
 
     - name: Upload Artefacts
       if: ${{ always() }}
@@ -161,4 +178,4 @@ jobs:
           build/src/scan.c
           build/tests/test-suite.log
           build/flex-*.tar.*
-          /home/runner/work/flex/results/cpp-builtin.sarif
+          results/cpp-builtin.sarif
