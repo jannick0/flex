@@ -115,7 +115,7 @@ jobs:
             mkdir -p cygwin
             echo > cygwin/cyg.CMD '@ECHO OFF'
             echo >>cygwin/cyg.CMD 'SETLOCAL'
-            echo >>cygwin/cyg.CMD "${CHO_TOOLS_DIR}\\cygwin\\bin\\bash -leo pipefail -c 'cd \"\$(cygpath '%CD:\\=/%')\"; %*'"
+            echo >>cygwin/cyg.CMD "${CHO_TOOLS_DIR}\\cygwin\\bin\\bash --noprofile --norc -e -o pipefail -c 'cd \"\$(cygpath '%CD:\\=/%')\"; %*'"
             echo 'Show cyg.CMD'
             cat cygwin/cyg.CMD
             popd
