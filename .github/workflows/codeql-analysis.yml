@@ -94,6 +94,9 @@ jobs:
         echo "PATH=$PATH"
         echo "Environment:"
         env | sort
+        echo 'choco config list'
+        choco config list | sort
+        CHO_TOOLS_DIR='C:\\tools'
         case '${{ matrix.sys.system }}' in
           (ubuntu)
             sudo apt-get install gcc autoconf gettext autopoint help2man lzip texinfo texlive
@@ -105,26 +108,31 @@ jobs:
             # choco install tinytex
             # https://community.chocolatey.org/packages/Cygwin
             choco install bison flex autoconf automake libtool gettext help2man lzip texlive --source cygwin
-            echo "Appending 'C:/cygwin/usr/bin' to PATH (file: $GITHUB_PATH)"
-            echo >> $GITHUB_PATH "$ChocolateyToolsLocation"
+            echo "Appending '${CHO_TOOLS_DIR}\\cygwin\\bin' to PATH (file: $GITHUB_PATH)"
+            echo >> $GITHUB_PATH "${CHO_TOOLS_DIR}\\cygwin\\bin"
 
-            # generate batch file for CYGWIN shell
+            # generate batch file for CYGWIN shell 'cyg'
             pushd "$RUNNER_TEMP"
             mkdir -p cygwin
             echo > cygwin/cyg.CMD '@ECHO OFF'
             echo >>cygwin/cyg.CMD 'SETLOCAL'
-            echo >>cygwin/cyg.CMD "C:\\cygwin\\bin\\bash -leo pipefail -c 'cd \"\$(cygpath '%CD:\\=/%')\"; %*'"
+            echo >>cygwin/cyg.CMD "${CHO_TOOLS_DIR}\\cygwin\\bin\\bash -leo pipefail -c 'cd \"\$(cygpath '%CD:\\=/%')\"; %*'"
+            echo 'Show cyg.CMD'
+            cat cygwin/cyg.CMD
             popd
             echo >> "$GITHUB_PATH" "${RUNNER_TEMP}\\cygwin"
             ;;
           (msys2)
             choco install tinytex
+            echo >> "$GITHUB_PATH" "${CHO_TOOLS_DIR}\\TinyTeX\\bin\\win32"
             ;;
           (*)
             echo "System ${{ matrix.sys.system }} on ${{ matrix.sys.os }} not configured."
             exit 1
             ;;
         esac
+        echo 'Show $GITHUB_PATH'
+        cat "$GITHUB_PATH"
 
     - name: Run Autogen
       if: ${{ success() }}
