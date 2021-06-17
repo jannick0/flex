@@ -38,7 +38,7 @@ jobs:
         # https://docs.github.com/en/free-pro-team@latest/github/finding-security-vulnerabilities-and-errors-in-your-code/configuring-code-scanning#changing-the-languages-that-are-analyzed
         sys:
           #- { system: ubuntu, os: ubuntu-latest , shell: bash }
-          #- { system: macos , os: macos-latest  , shell: bash }
+          - { system: macos , os: macos-latest  , shell: bash }
           - { system: cygwin, os: windows-latest, shell: 'cyg   {0}' }
           - { system: msys2 , os: windows-latest, shell: 'msys2 {0}' }
 
@@ -98,17 +98,19 @@ jobs:
         CHO_TOOLS_DIR='C:\tools'
         case '${{ matrix.sys.system }}' in
           (ubuntu)
+            sudo apt-get update
             sudo apt-get install gcc autoconf gettext autopoint help2man lzip texinfo texlive
             ;;
           (macos)
+            brew update
             brew install bison flex gcc autoconf automake libtool gettext help2man lzip texinfo texlab
             ;;
           (cygwin)
             # choco install tinytex
             # https://community.chocolatey.org/packages/Cygwin
-            choco install bison flex autoconf automake libtool gettext help2man lzip texlive --source cygwin
+            choco install bison flex autoconf automake libtool gettext help2man lzip --source cygwin
             echo "Appending '${CHO_TOOLS_DIR}\\cygwin\\bin' to PATH (file: $GITHUB_PATH)"
-            echo >> $GITHUB_PATH "${CHO_TOOLS_DIR}\\cygwin\\bin"
+            echo >> $GITHUB_PATH "C:/tools/cygwin/bin"
 
             # generate batch file for CYGWIN shell 'cyg'
             pushd "$RUNNER_TEMP"
@@ -119,7 +121,7 @@ jobs:
             echo 'Show cyg.CMD'
             cat cygwin/cyg.CMD
             popd
-            echo >> "$GITHUB_PATH" "${RUNNER_TEMP}\\cygwin"
+            echo >> "$GITHUB_PATH" "${RUNNER_TEMP}/cygwin"
             ;;
           (msys2)
             #choco install tinytex
@@ -130,7 +132,7 @@ jobs:
             exit 1
             ;;
         esac
-        echo 'Show $GITHUB_PATH'
+        echo "Show GITHUB_PATH=$GITHUB_PATH"
         cat "$GITHUB_PATH"
 
     - name: Run Autogen
@@ -143,9 +145,13 @@ jobs:
     - name: Run Configure
       if: ${{ success() }}
       run: |
+        case '${{ matrix.sys.system }}' in
+          (macos) configure_flags='ac_cv_func_reallocarray=no CPPFLAGS=-D_GNU_SOURCE';;
+          (*) configure_flags='';;
+        esac
         mkdir -p build
         cd build
-        ../configure -C
+        ../configure -C $configure_flags
 
     - name: Run Make
       if: ${{ success() }}
