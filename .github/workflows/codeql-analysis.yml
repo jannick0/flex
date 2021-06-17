@@ -95,7 +95,7 @@ jobs:
         echo "PATH=$PATH"
         echo "Environment:"
         env | sort
-        CHO_TOOLS_DIR='C:\tools'
+        CHO_TOOLS_DIR='C:/tools'
         case '${{ matrix.sys.system }}' in
           (ubuntu)
             sudo apt-get update
@@ -108,9 +108,9 @@ jobs:
           (cygwin)
             # choco install tinytex
             # https://community.chocolatey.org/packages/Cygwin
-            choco install bison flex autoconf automake libtool gettext help2man lzip --source cygwin
-            echo "Appending '${CHO_TOOLS_DIR}\\cygwin\\bin' to PATH (file: $GITHUB_PATH)"
-            echo >> $GITHUB_PATH "C:/tools/cygwin/bin"
+            choco install bison flex autoconf automake libtool gettext gettext-devel git help2man lzip --source cygwin
+            echo "Appending '${CHO_TOOLS_DIR}/cygwin/bin' to PATH (file: $GITHUB_PATH)"
+            echo >> $GITHUB_PATH "${CHO_TOOLS_DIR}/cygwin/bin"
 
             # generate batch file for CYGWIN shell 'cyg'
             pushd "$RUNNER_TEMP"
