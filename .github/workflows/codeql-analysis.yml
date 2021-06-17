@@ -117,6 +117,7 @@ jobs:
             mkdir -p cygwin
             echo > cygwin/cyg.CMD '@IF DEFINED CYG_DEBUG ECHO OFF'
             echo >>cygwin/cyg.CMD 'SETLOCAL'
+            echo >>cygwin/cyg.CMD 'ECHO PATH=%PATH%'
             echo >>cygwin/cyg.CMD 'SET SCRIPT=%1'
             echo >>cygwin/cyg.CMD 'SET SCRIPT=%SCRIPT:\\=/%'
             echo >>cygwin/cyg.CMD "${CHO_TOOLS_DIR}\\cygwin\\bin\\bash --noprofile --norc -e -o pipefail -c 'cd \"%CD:\\=/%\"; dos2unix %SCRIPT%; %SCRIPT%'"
