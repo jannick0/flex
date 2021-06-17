@@ -120,7 +120,7 @@ jobs:
             echo >>cygwin/cyg.CMD 'ECHO PATH=%PATH%'
             echo >>cygwin/cyg.CMD 'SET SCRIPT=%1'
             echo >>cygwin/cyg.CMD 'SET SCRIPT=%SCRIPT:\\=/%'
-            echo >>cygwin/cyg.CMD "${CHO_TOOLS_DIR}\\cygwin\\bin\\bash --noprofile --norc -e -o pipefail -c 'cd \"%CD:\\=/%\"; dos2unix %SCRIPT%; %SCRIPT%'"
+            echo >>cygwin/cyg.CMD "${CHO_TOOLS_DIR}\\cygwin\\bin\\bash --noprofile --norc -e -o pipefail -c 'cd \"%CD:\\=/%\"; sed -i \"s:\\r$::\" %SCRIPT%; %SCRIPT%'"
             echo 'Show cyg.CMD'
             cat cygwin/cyg.CMD
             popd
