@@ -91,11 +91,13 @@ jobs:
     - name: Install Dependencies
       shell: bash
       run: |
-        set -ex
-        echo "PATH=$PATH"
-        echo "Environment:"
-        env | sort
-        CHO_TOOLS_DIR='C:/tools'
+        if test -n "${CYG_DEBUG+set}"; then
+          set -ex
+          echo "PATH=$PATH"
+          echo "Environment:"
+          env | sort
+        fi
+        CHOCO_ROOT_DIR="$HOMEDRIVE/tools"
         case '${{ matrix.sys.system }}' in
           (ubuntu)
             sudo apt-get update
@@ -109,34 +111,58 @@ jobs:
             # choco install tinytex
             # https://community.chocolatey.org/packages/Cygwin
             choco install bison flex autoconf automake libtool gettext gettext-devel git help2man lzip --source cygwin
-            echo "Appending '${CHO_TOOLS_DIR}/cygwin/bin' to PATH (file: $GITHUB_PATH)"
-            echo >> $GITHUB_PATH "${CHO_TOOLS_DIR}/cygwin/bin"
+            if test -n "${CYG_DEBUG+set}"; then
+              echo "Appending '${CHOCO_ROOT_DIR}/cygwin/bin' to PATH (file: $GITHUB_PATH)"
+            fi
+            echo >> $GITHUB_PATH "${CHOCO_ROOT_DIR}/cygwin/bin"
 
-            # generate batch file for CYGWIN shell 'cyg'
-            pushd "$RUNNER_TEMP"
-            mkdir -p cygwin
-            echo > cygwin/cyg.CMD '@IF DEFINED CYG_DEBUG ECHO OFF'
-            echo >>cygwin/cyg.CMD 'SETLOCAL'
-            echo >>cygwin/cyg.CMD 'ECHO PATH=%PATH%'
-            echo >>cygwin/cyg.CMD 'SET SCRIPT=%1'
-            echo >>cygwin/cyg.CMD 'SET SCRIPT=%SCRIPT:\=/%'
-            echo >>cygwin/cyg.CMD "${CHO_TOOLS_DIR}\\cygwin\\bin\\bash --noprofile --norc -e -o pipefail -c 'cd \"%CD:\\=/%\"; sed -i \"s:\\r$::\" %SCRIPT%; %SCRIPT%'"
-            echo 'Show cyg.CMD'
-            cat cygwin/cyg.CMD
+            # generate CMD file for CYGWIN shell 'cyg'
+            mkdir -p "$RUNNER_TEMP/cygwin"
+            pushd "$RUNNER_TEMP/cygwin"
+            echo > cyg.CMD '@IF NOT DEFINED CYG_DEBUG ECHO OFF'
+            echo >>cyg.CMD 'SETLOCAL'
+            echo >>cyg.CMD 'SETLOCAL ENABLEDELAYEDEXPANSION'
+            echo >>cyg.CMD 'SET SCRIPT=%1'
+            echo >>cyg.CMD 'SET SCRIPT=%SCRIPT:\=/%'
+            echo >>cyg.CMD '@IF DEFINED CYG_DEBUG ECHO "PATH=%PATH%"'
+            echo >>cyg.CMD 'REM Remove from PATH any folder related to the installed Git'
+            echo >>cyg.CMD 'SET "PATH1="'
+            echo >>cyg.CMD 'SET "SEP="'
+            echo >>cyg.CMD 'FOR %%P IN ("%PATH:;=";"%") DO ('
+            echo >>cyg.CMD '  ECHO %%~A | FIND /V /I "/Git/" >NUL 2>&1 && SET "PATH1=!PATH1!!SEP!%%~A"&& SET "SEP=;"'
+            echo >>cyg.CMD ')'
+            echo >>cyg.CMD '@IF DEFINED CYG_DEBUG ECHO "PATH1=%PATH1%"'
+            echo >>cyg.CMD 'SET "PATH=%PATH1%"'
+            echo >>cyg.CMD "REM Check that program SED is on PATH only once, namely in CYGWIN's bin dir"
+            echo >>cyg.CMD 'REM to avoid confusion with, e.g., installed GIT.'
+            echo >>cyg.CMD 'FOR /F "usebackq" %%N IN (`WHERE SED ^| FIND /V /C ""`) DO ('
+            echo >>cyg.CMD '  IF NOT %%N EQU 1 ('
+            echo >>cyg.CMD '    ECHO [ CYG.CMD ERROR ] Program SED %%N times found on PATH'
+            echo >>cyg.CMD '    WHERE SED'
+            echo >>cyg.CMD '    EXIT /b 2'
+            echo >>cyg.CMD '  )'
+            echo >>cyg.CMD ')'
+            echo >>cyg.CMD "${CHOCO_ROOT_DIR}/cygwin/bin/bash --noprofile --norc -e -o pipefail -c 'cd \"%CD:\\=/%\"; sed -i \"s:\\r$::\" %SCRIPT%; %SCRIPT%'"
+            if test -n "${CYG_DEBUG+set}"; then
+              echo 'Show cyg.CMD:'
+              cat cyg.CMD
+            fi
             popd
             echo >> "$GITHUB_PATH" "${RUNNER_TEMP}/cygwin"
             ;;
           (msys2)
             #choco install tinytex
-            #echo >> "$GITHUB_PATH" "${CHO_TOOLS_DIR}\\TinyTeX\\bin\\win32"
+            #echo >> "$GITHUB_PATH" "${CHOCO_ROOT_DIR}\\TinyTeX\\bin\\win32"
             ;;
           (*)
             echo "System ${{ matrix.sys.system }} on ${{ matrix.sys.os }} not configured."
             exit 1
             ;;
         esac
-        echo "Show GITHUB_PATH=$GITHUB_PATH"
-        cat "$GITHUB_PATH"
+        if test -n "${CYG_DEBUG+set}"; then
+          echo "Show GITHUB_PATH=$GITHUB_PATH"
+          cat "$GITHUB_PATH"
+        fi
 
     - name: Run Autogen
       if: ${{ success() }}
